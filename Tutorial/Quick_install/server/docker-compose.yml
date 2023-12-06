@@ -1,0 +1,121 @@
+version: '3.8'
+
+services:
+
+  db:
+    image: postgres:latest
+    restart: unless-stopped
+    container_name: postgres_db
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_MULTIPLE_DATABASES=${POSTGRES_MLFLOW_DB},${POSTGRES_PREFECT_DB}
+    ports:
+      - ${POSTGRES_PORT}:5432
+    volumes:
+      - ./init.sh:/docker-entrypoint-initdb.d/init.sh:rox
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mlops
+
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    container_name: minio_s3
+    environment:
+        - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+        - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    ports:
+        - "9000:9000"
+        - "9001:9001"
+    volumes:
+        - minio_data:/data
+    command: minio server /data --console-address ':9001' --address ':9000'
+    networks:
+      - mlops
+
+
+  createbuckets:
+    image: minio/mc:latest
+    container_name: minio_mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set minio ${MLFLOW_S3_ENDPOINT_URL} '${MINIO_ROOT_USER}' '${MINIO_ROOT_PASSWORD}') do echo '...waiting...' && sleep 1; done;
+      /usr/bin/mc mb minio/${MLFLOW_BUCKET_NAME};
+      /usr/bin/mc mb minio/${PREFECT_BUCKET_NAME};
+      /usr/bin/mc mb minio/${DVC_BUCKET_NAME};
+      exit 0;
+      "
+    networks:
+      - mlops
+
+  
+  prefect_server:
+    image: prefecthq/prefect:2.10.9-python3.10
+    restart: unless-stopped
+    container_name: prefect_server
+    entrypoint: >
+      /bin/sh -c "
+      prefect block register --file /root/.prefect/prefect_setting_s3.py;
+      prefect server start;
+      "
+    environment:
+      # prefect settings
+      - PREFECT_SERVER_API_HOST=${PREFECT_SERVER_API_HOST}
+      - PREFECT_UI_API_URL=http://${PREFECT_SERVER_API_HOST}:${PREFECT_SERVER_API_PORT}/api
+      - PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT}/${POSTGRES_PREFECT_DB}
+      # prefect_setting_s3.py
+      - PREFECT_BUCKET_NAME=${PREFECT_BUCKET_NAME}
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - RFS_NAME=${RFS_NAME}
+      - RFS_SERVER_HOST=${RFS_SERVER_HOST}
+    ports:
+      - ${PREFECT_SERVER_API_PORT}:4200
+    volumes:
+      - prefect_data:/root/.prefect
+      - ./prefect_setting_s3.py:/root/.prefect/prefect_setting_s3.py
+    depends_on:
+      - db
+      - minio
+      - createbuckets
+    networks:
+      - mlops
+
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.5.0
+    restart: unless-stopped
+    container_name: mlflow_server
+    entrypoint: >
+      /bin/sh -c "
+      pip install psycopg2-binary;
+      pip install boto3;
+      mlflow server --host 0.0.0.0 -p 5050 --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT}/${POSTGRES_MLFLOW_DB} --default-artifact-root s3://${MLFLOW_BUCKET_NAME}/ --artifacts-destination s3://${MLFLOW_BUCKET_NAME}/;
+      "
+    ports:
+      - ${MLFLOW_SERVER_PORT}:5050
+    environment:
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+      - MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL}
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+    depends_on:
+      - db
+      - minio
+    networks:
+      - mlops
+
+
+volumes:
+  postgres_data:
+  minio_data:
+  prefect_data:
+
+
+networks:
+  mlops:
+    name: mlops

@@ -1,0 +1,27 @@
+version: '3.8'
+
+name: flow_agent_${POOL_NAME}_${QUEUE_NAME}
+
+services:
+
+  flow_agent:
+    build: .
+    image: flow_agent_${POOL_NAME}_${QUEUE_NAME}_gpu
+    container_name: flow_agent_${POOL_NAME}_${QUEUE_NAME}_gpu
+    command: prefect agent start --pool ${POOL_NAME} --work-queue ${QUEUE_NAME}
+    environment:
+      # for MLflow
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL}
+      - MLFLOW_BUCKET_NAME=${MLFLOW_BUCKET_NAME}
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+      # for Prefect
+      - PREFECT_API_URL=${PREFECT_API_URL}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

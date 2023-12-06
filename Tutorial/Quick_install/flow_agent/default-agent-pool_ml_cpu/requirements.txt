@@ -1,0 +1,6 @@
+# All the used packages in flow.py (except mlflow and prefect)
+dill # dumping function
+pandas
+scikit-learn
+xgboost
+hyperopt

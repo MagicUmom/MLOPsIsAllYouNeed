@@ -1,0 +1,8 @@
+.dvc/
+MNIST/
+MNIST.zip
+__pycache__/
+.DS_Store/
+
+expand_train_data.py
+demo_create_first_version_dvc.sh

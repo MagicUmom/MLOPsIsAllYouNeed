@@ -1,0 +1,10 @@
+s3fs
+pyarrow
+fastparquet
+python-dotenv
+psycopg2-binary
+boto3
+mlflow==2.5.0
+prefect==2.10.9
+# for prefect
+pydantic==1.10.7

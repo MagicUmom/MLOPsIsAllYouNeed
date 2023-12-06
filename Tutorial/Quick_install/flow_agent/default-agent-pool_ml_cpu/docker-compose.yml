@@ -1,0 +1,26 @@
+version: '3.8'
+
+name: flow_agent_${POOL_NAME}_${QUEUE_NAME}
+
+services:
+
+  flow_agent:
+    build: .
+    image: flow_agent_${POOL_NAME}_${QUEUE_NAME}_cpu
+    container_name: flow_agent_${POOL_NAME}_${QUEUE_NAME}_cpu
+    command: prefect agent start --pool ${POOL_NAME} --work-queue ${QUEUE_NAME}
+    environment:
+      # MLflow
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+      - MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL}
+      - MLFLOW_BUCKET_NAME=${MLFLOW_BUCKET_NAME}
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+      # Prefect
+      - PREFECT_API_URL=${PREFECT_API_URL}
+    networks:
+      - mlops
+
+networks:
+  mlops:
+    external: true

@@ -1,0 +1,16 @@
+# s3
+s3fs
+pyarrow
+psycopg2-binary
+boto3
+fastparquet
+
+# MLflow
+mlflow==2.5.0
+
+# DVC
+dvc
+dvc_s3
+
+# Google Drive
+gdown

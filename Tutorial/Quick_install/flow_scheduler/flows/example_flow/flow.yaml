@@ -1,0 +1,22 @@
+RFS_NAME: 'minio' # don't modify # Name of the s3 block
+
+
+# "flow_name/deploy_name" should be unique (check prefect server)
+deployment:
+  flow_py_name: prefect_flow.py    # name of your flow.py
+  flow_name: main                  # project name # same as your flow function in flow.py
+  deploy_name: model_training      # purpose (e.g., daliy_model, data_update, etc.)
+  pool_name: default-agent-pool    # resource pool
+  queue_name: ml                   # project name (temporary)
+
+scheduler:
+  # main
+  method: 'rrule'                  # interval, cron, rrule
+  timezone: 'Asia/Taipei'          # 'Asia/Taipei', 'UTC'
+  # settings
+  interval: 60                     # sec
+  cron: '1 * * * *'
+  rrule: 'FREQ=WEEKLY;BYDAY=MO,WE,FR;UNTIL=20240730T040000Z'
+
+  # How to write cron & rrule? check the link below
+  # https://docs.prefect.io/2.10.21/concepts/schedules/

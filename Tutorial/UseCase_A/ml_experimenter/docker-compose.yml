@@ -1,0 +1,37 @@
+version: "3.8"
+   
+services:
+  jupyter:
+    build: .
+    image: ml_experimenter
+    container_name: ml_experimenter
+    ports:
+      - 8888:8888
+    volumes:
+      - ./notebooks:/home
+      - ../flow_scheduler/flows_mnist/data:/home/user/mnist_example/data
+    user: root
+    environment:
+      # for mlflow
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+      - MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL}
+      - MLFLOW_BUCKET_NAME=${MLFLOW_BUCKET_NAME}
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+      # jupyter
+      - NB_USER=AIF # set your own user name
+      - NB_UID=1000  # set your own uid
+      - NB_GID=1000  # set your own gid
+      - CHOWN_HOME=yes
+      - JUPYTER_ENABLE_LAB="yes"
+      - CHOWN_HOME_OPTS=-R
+    working_dir: /home/${NB_USER}
+    command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''" # comment this line if you want to use autherization
+    networks:
+      - ml_experimenter_net
+
+
+networks:
+  ml_experimenter_net:
+    name: mlops
+    external: true

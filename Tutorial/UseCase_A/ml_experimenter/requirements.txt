@@ -1,0 +1,9 @@
+numpy~=1.23.5
+python-dotenv~=0.21.0
+torch==2.0.*
+torchvision
+torchinfo
+gdown
+dvc
+dvc_s3
+pyyaml

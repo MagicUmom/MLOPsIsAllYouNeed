@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+
+  flow_scheduler:
+    build:
+      context: ..
+      dockerfile: ./flow_scheduler/Dockerfile
+      args:
+        FLOW_DIR: ${FLOW_DIR}
+    image: flow_scheduler
+    container_name: flow_scheduler
+    command: python setup.py
+    environment:
+      # for prefect
+      - PREFECT_API_URL=${PREFECT_API_URL}
+      - PREFECT_SERVER_API_HOST=${PREFECT_SERVER_API_HOST}
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+      - MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL}
+    networks:
+      - flow_scheduler_net
+
+networks:
+  flow_scheduler_net:
+    name: mlops
+    external: true

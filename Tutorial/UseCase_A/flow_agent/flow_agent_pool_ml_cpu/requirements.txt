@@ -1,0 +1,9 @@
+# all the used packages in flow.py (except mlflow and prefect)
+dill
+numpy~=1.23.5
+python-dotenv~=0.21.0
+torchvision
+torch==2.0.*
+dvc
+dvc-s3
+pyyaml

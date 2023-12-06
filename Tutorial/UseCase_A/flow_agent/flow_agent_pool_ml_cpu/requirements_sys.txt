@@ -1,0 +1,8 @@
+# prefect==2.10.9
+s3fs
+pyarrow
+fastparquet
+python-dotenv
+psycopg2-binary
+boto3
+mlflow==2.5.0

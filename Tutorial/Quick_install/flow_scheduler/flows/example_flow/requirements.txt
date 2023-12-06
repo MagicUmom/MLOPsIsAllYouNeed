@@ -1,0 +1,9 @@
+# Better include version
+# check `pip show package_name`
+
+mlflow==2.5.0
+dill==0.3.6
+pandas==2.0.2
+scikit-learn==1.2.2
+xgboost==1.7.6
+hyperopt==0.2.7

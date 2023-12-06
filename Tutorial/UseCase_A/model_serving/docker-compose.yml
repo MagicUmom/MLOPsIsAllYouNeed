@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  web:
+    restart: unless-stopped
+    build:
+      context: app
+    container_name: model_serving
+    ports:
+      - '10000:10000'
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL}
+      - FLASK_APP=app.py
+      - MLFLOW_SERVER=${MLFLOW_SERVER}
+    command: 'python3 app.py'
+    volumes:
+      - ./app:/app
+      - ./app/candidate:/app/candidate
+    networks:
+      - model_serving_net
+
+
+networks:
+  model_serving_net:
+    name: mlops
+    external: true
